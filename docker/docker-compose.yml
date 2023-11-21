@@ -1,0 +1,24 @@
+volumes:
+  mtg_dbdata:
+    external: false
+    name: mtg_dbdata
+
+services:
+  postgres:
+    container_name: mtg_db
+    image: postgres:15.3
+    volumes:
+      - mtg_dbdata:/var/lib/postgresql/data
+      - ./script:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    environment:
+      TZ: Asia/Tokyo
+      POSTGRES_DB: MTG
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_ROOT_PASSWORD: root
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    hostname: postgres
+    restart: always
+
