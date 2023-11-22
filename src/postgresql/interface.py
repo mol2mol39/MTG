@@ -1,5 +1,6 @@
 import psycopg2
 from psycopg2 import extras
+import pandas as pd
 
 
 class PostgresInterface:
@@ -33,6 +34,26 @@ class PostgresInterface:
         with self._get_connection() as conn:
             with conn.cursor() as cur:
                 extras.execute_values(cur, query, params)
+
+    # select文実行(データフレームを返す)
+    def _exe_select_df(self, query, params=[]):
+        with self._get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(query, params)
+                rows = cur.fetchall()
+                columns = [desc[0] for desc in cur.description]
+                df = pd.DataFrame(rows, columns=columns)
+        return df
+    
+    # select文実行（辞書型で返す）
+    def _exe_select_dict(self, query, params=[]):
+        results = []
+        with self._get_connection() as conn:
+            with conn.cursor(cursor_factory=extras.DictCursor) as cur:
+                cur.execute(query, params)
+                rows = cur.fetchall()
+                results = [dict(row) for row in rows]
+        return results
 
     def insert_user(self, values):
         sql = f"""
@@ -94,3 +115,17 @@ class PostgresInterface:
         with open(f"data/error_data_{mode}.txt", "a") as file:
             for val in values:
                 file.write(str(val) + '\n')
+
+    def select_game_data(self, return_value_type):
+        sql = f"""
+              SELECT d.main_colors, g.opp_colors, g.num_turns, g.won, count(*)
+                FROM {self.expansion}.DECK d
+                JOIN {self.expansion}.GAME g
+                  ON g.draft_id = d.draft_id AND g.build_index = d.build_index
+                WHERE LENGTH(d.main_colors) = 2 AND LENGTH(g.opp_colors) = 2
+                GROUP BY d.main_colors, g.won, g.opp_colors, g.num_turns;
+              """
+        if return_value_type == 'df':
+            return self._exe_select_df(sql)
+        else:
+            return self._exe_select_dict(sql)
