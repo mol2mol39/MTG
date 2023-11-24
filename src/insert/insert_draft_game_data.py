@@ -1,7 +1,9 @@
 import pandas as pd
 import uuid
-import csv
 import time
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from postgresql.interface import PostgresInterface
 
