@@ -143,7 +143,7 @@ def main():
     deck_color_by_draft_df = dbc.select_deck_color_by_draft()
     won_by_turns_df = dbc.select_won_by_turns()
 
-    json_data = []
+    json_data = {}
     grouped_colors_df = deck_color_by_draft_df.groupby('main_colors')
 
     # デッキカラー単位でデータ加工
@@ -165,12 +165,10 @@ def main():
             result[er_index][rank]['event_count'] += 1
         
         # デッキカラー単位のデータ格納
-        json_data.append({
-            deck_colors: {
-                'event_wins': result,
-                'turn_info': get_won_by_turns_colors(deck_colors, won_by_turns_df)
-            }
-        })
+        json_data[deck_colors] = {
+            'event_wins': result,
+            'turn_info': get_won_by_turns_colors(deck_colors, won_by_turns_df)
+        }
 
     # データをファイル出力
     with open(os.path.join(output_dir, 'wr_and_mana_curve.json'), 'w') as file:
